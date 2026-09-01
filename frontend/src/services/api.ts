@@ -308,3 +308,25 @@ export async function saveAITask(task: {
 
   return response.json()
 }
+
+export async function generateProjectInsights(projectId: number) {
+    const response = await fetch(
+        `${API_BASE_URL}/api/ai/project-insights`,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                project_id: projectId,
+            }),
+        },
+    )
+
+    if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || 'Failed to generate project insights')
+    }
+
+    return response.json()
+}

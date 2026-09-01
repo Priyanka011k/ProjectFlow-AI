@@ -4,6 +4,7 @@ import Projects from './pages/Projects'
 import Tasks from './pages/Tasks'
 import Teams from './pages/Teams'
 import AITaskGenerator from './pages/AITaskGenerator'
+import ProjectInsights from './components/ProjectInsights'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/teams" element={<Teams />} />
         <Route path="/ai-tasks" element={<AITaskGenerator />} />
+        <Route path="/insights" element={<ProjectInsights />} />
       </Routes>
     </BrowserRouter>
   )

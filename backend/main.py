@@ -1,4 +1,5 @@
 from ai.task_generator import generate_tasks
+from ai.project_insights import generate_project_insights
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -369,4 +370,51 @@ def generate_ai_tasks(request: AITaskRequest):
         raise HTTPException(
             status_code=500,
             detail=f"AI task generation failed: {str(e)}"
+        )
+
+    # ============================================================
+# AI PROJECT INSIGHTS
+# ============================================================
+
+class ProjectInsightsRequest(BaseModel):
+    project_id: int
+
+
+@app.post("/api/ai/project-insights")
+def get_project_insights(
+    request: ProjectInsightsRequest,
+    db: Session = Depends(get_db)
+):
+    # Find project
+    project = db.query(Project).filter(
+        Project.id == request.project_id
+    ).first()
+
+    if not project:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found"
+        )
+
+    # Get tasks belonging to project
+    tasks = db.query(Task).filter(
+        Task.project_id == request.project_id
+    ).all()
+
+    try:
+        insights = generate_project_insights(
+            project,
+            tasks
+        )
+
+        return {
+            "project_id": project.id,
+            "project_name": project.name,
+            "insights": insights
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"AI project insights failed: {str(e)}"
         )

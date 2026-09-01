@@ -34,6 +34,13 @@ function Sidebar() {
         >
           Team
         </Link>
+
+        <Link
+          to="/insights"
+          className="block rounded-lg px-4 py-3 text-sm text-slate-400 hover:bg-slate-800 hover:text-white"
+        >
+          AI Insights 🤖
+        </Link>
       </nav>
 
       <div className="absolute bottom-6 left-6 right-6">
