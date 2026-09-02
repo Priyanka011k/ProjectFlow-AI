@@ -1,5 +1,6 @@
 from ai.task_generator import generate_tasks
 from ai.project_insights import generate_project_insights
+from ai.task_prioritizer import prioritize_tasks
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -417,4 +418,54 @@ def get_project_insights(
         raise HTTPException(
             status_code=500,
             detail=f"AI project insights failed: {str(e)}"
+        )
+
+    # ============================================================
+# AI TASK PRIORITIZATION
+# ============================================================
+
+class TaskPrioritizationRequest(BaseModel):
+    project_id: int
+
+
+@app.post("/api/ai/prioritize-tasks")
+def prioritize_project_tasks(
+    request: TaskPrioritizationRequest,
+    db: Session = Depends(get_db)
+):
+    # Find project
+    project = db.query(Project).filter(
+        Project.id == request.project_id
+    ).first()
+
+    if not project:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found"
+        )
+
+    # Get tasks belonging to project
+    tasks = db.query(Task).filter(
+        Task.project_id == request.project_id
+    ).all()
+
+    if not tasks:
+        raise HTTPException(
+            status_code=404,
+            detail="No tasks found for this project"
+        )
+
+    try:
+        result = prioritize_tasks(tasks)
+
+        return {
+            "project_id": project.id,
+            "project_name": project.name,
+            "prioritized_tasks": result["prioritized_tasks"]
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"AI task prioritization failed: {str(e)}"
         )

@@ -283,11 +283,14 @@ export async function generateAITasks(
   return response.json()
 }
 
-export async function saveAITask(task: {
-  name: string
-  description: string
-  priority: string
-}) {
+export async function saveAITask(
+  task: {
+    name: string
+    description: string
+    priority: string
+  },
+  projectId: number,
+) {
   const response = await fetch(`${API_BASE_URL}/api/tasks`, {
     method: 'POST',
     headers: {
@@ -298,7 +301,7 @@ export async function saveAITask(task: {
       description: task.description,
       priority: task.priority,
       status: 'Todo',
-      project_id: null,
+      project_id: projectId,
     }),
   })
 
@@ -309,24 +312,35 @@ export async function saveAITask(task: {
   return response.json()
 }
 
-export async function generateProjectInsights(projectId: number) {
-    const response = await fetch(
-        `${API_BASE_URL}/api/ai/project-insights`,
-        {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                project_id: projectId,
-            }),
-        },
+export interface ProjectInsightsResponse {
+  project_id: number
+  project_name: string
+  insights: string
+}
+
+export async function generateProjectInsights(
+  projectId: number,
+): Promise<ProjectInsightsResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/ai/project-insights`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        project_id: projectId,
+      }),
+    },
+  )
+
+  if (!response.ok) {
+    const error = await response.json()
+
+    throw new Error(
+      error.detail || 'Failed to generate project insights',
     )
+  }
 
-    if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.detail || 'Failed to generate project insights')
-    }
-
-    return response.json()
+  return response.json()
 }
