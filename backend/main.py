@@ -177,6 +177,34 @@ class TaskUpdate(BaseModel):
 # TASK APIs
 # ============================================================
 
+def update_project_progress(project_id, db):
+    if project_id is None:
+        return
+
+    project = db.query(Project).filter(
+        Project.id == project_id
+    ).first()
+
+    if not project:
+        return
+
+    tasks = db.query(Task).filter(
+        Task.project_id == project_id
+    ).all()
+
+    if not tasks:
+        project.progress = 0
+        return
+
+    completed_tasks = sum(
+        1 for task in tasks
+        if str(task.status).lower() == "done"
+    )
+
+    project.progress = round(
+        (completed_tasks / len(tasks)) * 100
+    )
+
 # GET TASKS
 @app.get("/api/tasks")
 def get_tasks(db: Session = Depends(get_db)):
@@ -185,10 +213,7 @@ def get_tasks(db: Session = Depends(get_db)):
 
 # CREATE TASK
 @app.post("/api/tasks")
-def create_task(
-    task: TaskCreate,
-    db: Session = Depends(get_db)
-):
+def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     new_task = Task(
         name=task.name,
         description=task.description,
@@ -200,6 +225,10 @@ def create_task(
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
+
+    # Automatically update project progress
+    update_project_progress(new_task.project_id, db)
+    db.commit()
 
     return new_task
 
@@ -221,17 +250,33 @@ def update_task(
             detail="Task not found"
         )
 
+    # Store project before updating
+    old_project_id = task.project_id
+
+    # Update task
     task.name = task_update.name
     task.description = task_update.description
     task.status = task_update.status
     task.priority = task_update.priority
     task.project_id = task_update.project_id
 
+    # Save task changes
     db.commit()
+
+    # Recalculate progress
+    update_project_progress(task.project_id, db)
+
+    # If task moved to another project,
+    # update the old project too
+    if old_project_id != task.project_id:
+        update_project_progress(old_project_id, db)
+
+    # Save progress changes
+    db.commit()
+
     db.refresh(task)
 
     return task
-
 
 # DELETE TASK
 @app.delete("/api/tasks/{task_id}")
@@ -249,7 +294,14 @@ def delete_task(
             detail="Task not found"
         )
 
+    # Store project before deleting the task
+    project_id = task.project_id
+
     db.delete(task)
+    db.commit()
+
+    # Automatically update project progress
+    update_project_progress(project_id, db)
     db.commit()
 
     return {

@@ -103,6 +103,9 @@ function Tasks() {
       queryClient.invalidateQueries({
         queryKey: ['tasks'],
       })
+      queryClient.invalidateQueries({
+        queryKey: ['projects'],
+      })
 
       setEditingId(null)
     },
@@ -234,8 +237,8 @@ function Tasks() {
                 <option value="In Progress">
                   In Progress
                 </option>
-                <option value="Completed">
-                  Completed
+                <option value="Done">
+                  Done
                 </option>
               </select>
             </div>
@@ -383,8 +386,8 @@ function Tasks() {
                       <option value="In Progress">
                         In Progress
                       </option>
-                      <option value="Completed">
-                        Completed
+                      <option value="Done">
+                        Done
                       </option>
                     </select>
 

@@ -95,7 +95,7 @@ export interface Task {
   id: number
   name: string
   description: string
-  status: 'Todo' | 'In Progress' | 'Completed'
+  status: 'Todo' | 'In Progress' | 'Done'
   priority: 'Low' | 'Medium' | 'High'
   project_id: number | null
 }
@@ -339,6 +339,45 @@ export async function generateProjectInsights(
 
     throw new Error(
       error.detail || 'Failed to generate project insights',
+    )
+  }
+
+  return response.json()
+}
+
+export interface PrioritizedTask {
+  task_id: number
+  recommended_priority: 'High' | 'Medium' | 'Low'
+  reason: string
+}
+
+export interface TaskPrioritizationResponse {
+  project_id: number
+  project_name: string
+  prioritized_tasks: PrioritizedTask[]
+}
+
+export async function prioritizeProjectTasks(
+  projectId: number,
+): Promise<TaskPrioritizationResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/ai/prioritize-tasks`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        project_id: projectId,
+      }),
+    },
+  )
+
+  if (!response.ok) {
+    const error = await response.json()
+
+    throw new Error(
+      error.detail || 'Failed to prioritize project tasks',
     )
   }
 
